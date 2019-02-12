@@ -1,0 +1,118 @@
+def xodisplay(board):
+    print(f'   |   |   \n {board[0]} | {board[1]} | {board[2]} \n___|___|___\n   |   |   \n {board[3]} | {board[4]} | {board[5]}  \n___|___|___\n   |   |   \n {board[6]} | {board[7]} | {board[8]}  \n   |   |\n')
+
+def xoinput(board, marker, i=0):
+    x=int(input())
+    while xooccupied(board, x)==True or x not in range(1,10):
+        x=int(input())
+    if((i+1)%2==1):
+        board[int(x)-1]=marker
+    else:
+        if marker=='X':
+            board[int(x)-1]='O'
+        elif marker=='O':
+            board[int(x)-1]='X'
+
+def xocheck(board, ok, marker):
+    if(board[0]==board[1]==board[2]!=' '):
+        if(board[0]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[3]==board[4]==board[5]!=' '):
+        if(board[3]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[6]==board[7]==board[8]!=' '):
+        if(board[6]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[0]==board[3]==board[6]!=' '):
+        if(board[0]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[1]==board[4]==board[7]!=' '):
+        if(board[1]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[2]==board[5]==board[8]!=' '):
+        if(board[2]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[0]==board[4]==board[8]!=' '):
+        if(board[0]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(board[2]==board[4]==board[6]!=' '):
+        if(board[2]==marker):
+            ok='1'
+        else:
+            ok='2'
+    elif(xofull(board)==True):
+        ok='Draw'
+    return ok
+
+def xomarker():
+    print('First player type marker')
+    x=input()
+    while x.lower()!='x' and x.lower()!='o' :
+        x=input()
+    return x.upper()
+
+import random
+
+def xorand():
+    x=random.randint(1,2)
+    print(f'First move is player {x}')
+
+def xooccupied(board,index):
+    if(board[index-1]!=' '):
+        return True
+    else:
+        return False
+
+def xoreplay():
+    print('Do you want to play again? yes/no')
+    ok=input().lower()
+    if (ok=='yes'):
+        return True
+    else:
+        return False
+
+def xofull(board):
+    for i in range(0,8):
+        if not xooccupied(board,i):
+            return False
+    return True
+
+from IPython.display import clear_output
+
+i=0
+ok='False'
+replay=True
+while(replay==True):
+    board=[' ',' ',' ',' ',' ',' ',' ',' ',' ']
+    xorand()
+    marker=xomarker()
+    xodisplay(board)
+    while ok!='True':
+        xoinput(board, marker, i)
+        i=i+1
+        xodisplay(board)
+        ok=xocheck(board, ok, marker)
+        if(ok=='1'):
+            print('Player 1 won')
+            break
+        elif(ok=='2'):
+            print('Player 2 won')
+            break
+        elif(ok=='Draw'):
+            print('Draw')
+            break
+    replay=xoreplay()
