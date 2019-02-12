@@ -1,0 +1,122 @@
+"""
+Allows the user to play an interactive game of blackjack where the user is allowed to specify the ammount of money played in total,
+the amount bet on each hand, whether he wants to hit, and whether he wants to walk away after each hand
+"""
+
+class Deck():
+    
+    import random
+    
+    def __init__(self, deck=[2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,11]):
+        self.deck=deck
+        
+    def draw(self):
+        card=random.sample(self.deck,1)
+        self.deck.remove(card[0])
+        return card
+    
+    def add(self,card):
+        self.deck.append(card)
+
+class Account:
+    
+    def __init__(self,owner,balance):
+        self.owner=owner
+        self.balance=balance
+    
+    def deposit(self, value):
+        self.balance=self.balance+value
+    
+    def withdraw(self, value):
+        if(self.balance-value>=0):
+            self.balance=self.balance-value
+        else:
+            print("Balance insufficient")
+
+from IPython.display import clear_output
+import random
+
+print('What is your name?')
+name=input()
+print('How much money do you want to bet')
+balance=int(input())
+funds=Account(name,balance)
+print('Do you want to play?')
+play=input()
+while(play != 'yes' and play != 'no'):
+    print('Could you be clearer?')
+    play=input()
+while(funds.balance>0 and play=='yes'):
+    print('How much do you want to bet?')
+    bet=int(input())
+    sumdealer=0
+    sum21=0
+    mydeck=Deck()
+    dealer=Deck([])
+    player=Deck([])
+    card=mydeck.draw()
+    print(f'Computer cards are {card[0]} X')
+    dealer.deck.append(card[0])
+    dealer.deck.append(mydeck.draw()[0])
+    player.deck.append(mydeck.draw()[0])
+    player.deck.append(mydeck.draw()[0])
+    print(f'Player cards are {player.deck[0]} {player.deck[1]}\nDo you wish to draw another card?')
+    cont=input()
+    sum21=sum(player.deck)
+    while(cont != 'yes' and cont != 'no'):
+        print('Could you be clearer?')
+        cont=input()
+    while(cont=='yes' and sum21<22):
+        card=mydeck.draw()[0]
+        sum21=sum21+card
+        player.deck.append(card)
+        #check if over 21 or has ace
+        if(sum21>21 and (11 not in player.deck)):
+            printstr=' '.join(str(a) for a in player.deck)
+            print(f'Player cards are {printstr}')
+            print('You lost')
+            funds.withdraw(bet)
+        while(sum21>21 and (11 in player.deck)):
+            player.deck.remove(11)
+            player.deck.append(1)
+            sum21=sum21-10
+        if(sum21<=21):
+            printstr=' '.join(str(a) for a in player.deck)
+            print(f'Player cards are {printstr}')
+            print('\nDo you wish to draw another card?')
+            cont=input()
+            while(cont != 'yes' and cont != 'no'):
+                print('Could you be clearer?')
+                cont=input()
+    if(cont=='no'):
+        sumdealer=sum(dealer.deck)
+        while(sumdealer<sum21 or sumdealer<21):
+            card=mydeck.draw()[0]
+            sumdealer=sumdealer+card
+            dealer.deck.append(card)
+            if(sumdealer>21 and (11 not in dealer.deck)):
+                printstr=str(' '.join(str(a) for a in dealer.deck))
+                print(f'Dealer cards are {printstr}')
+                print('Dealer lost')
+                funds.deposit(bet)
+                break
+            while(sumdealer>21 and (11 in dealer.deck)):
+                dealer.deck.remove(11)
+                dealer.deck.append(1)
+                sumdealer=sumdealer-10
+            if(sumdealer>sum21):
+                printstr=str(' '.join(str(a) for a in dealer.deck))
+                print(f'Dealer cards are {printstr}')
+                print(f'{sumdealer} {sum21}')
+                print('Dealer won')
+                funds.withdraw(bet)
+                break
+            if(sumdealer==sum21):
+                printstr=str(' '.join(str(a) for a in dealer.deck))
+                print(f'Dealer cards are {printstr}')
+                print('Draw')
+                break
+    print(f'Money available:{funds.balance}')
+    print('Do you wish to continue playing?')
+    play=input()
+    clear_output()
