@@ -1,3 +1,7 @@
+"""
+Allows 2 users to play tic-tac-toe by allowing the first player to select the symbol he wants to use and each player to select the 
+position on the grid
+"""
 def xodisplay(board):
     print(f'   |   |   \n {board[0]} | {board[1]} | {board[2]} \n___|___|___\n   |   |   \n {board[3]} | {board[4]} | {board[5]}  \n___|___|___\n   |   |   \n {board[6]} | {board[7]} | {board[8]}  \n   |   |\n')
 
