@@ -1,3 +1,4 @@
+  
 """
 Allows the user to play an interactive game of blackjack where the user is allowed to specify the ammount of money played in total,
 the amount bet on each hand, whether he wants to hit, and whether he wants to walk away after each hand
@@ -38,17 +39,21 @@ import random
 
 print('What is your name?')
 name=input()
-print('How much money do you want to bet')
+print('How much money do you want to bet in total?')
 balance=int(input())
 funds=Account(name,balance)
-print('Do you want to play?')
+print('Do you want to play?(yes/no)')
 play=input()
 while(play != 'yes' and play != 'no'):
     print('Could you be clearer?')
     play=input()
 while(funds.balance>0 and play=='yes'):
-    print('How much do you want to bet?')
+    print('How much do you want to bet on this hand?')
+    print(f'Money available:{funds.balance}')
     bet=int(input())
+    while(bet > funds.balance):
+        print(f'Bet exceeds balance {type(bet)}')
+        bet=int(input())
     sumdealer=0
     sum21=0
     mydeck=Deck()
@@ -60,7 +65,7 @@ while(funds.balance>0 and play=='yes'):
     dealer.deck.append(mydeck.draw()[0])
     player.deck.append(mydeck.draw()[0])
     player.deck.append(mydeck.draw()[0])
-    print(f'Player cards are {player.deck[0]} {player.deck[1]}\nDo you wish to draw another card?')
+    print(f'Player cards are {player.deck[0]} {player.deck[1]}\nDo you wish to draw another card?(yes/no)')
     cont=input()
     sum21=sum(player.deck)
     while(cont != 'yes' and cont != 'no'):
@@ -83,7 +88,7 @@ while(funds.balance>0 and play=='yes'):
         if(sum21<=21):
             printstr=' '.join(str(a) for a in player.deck)
             print(f'Player cards are {printstr}')
-            print('\nDo you wish to draw another card?')
+            print('\nDo you wish to draw another card?(yes/no)')
             cont=input()
             while(cont != 'yes' and cont != 'no'):
                 print('Could you be clearer?')
