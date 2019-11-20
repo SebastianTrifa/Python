@@ -1,0 +1,237 @@
+def process_shifts(path_to_csv):
+    """
+
+    :param path_to_csv: The path to the work_shift.csv
+    :type string:
+    :return: A dictionary with time as key (string) with format %H:%M
+        (e.g. "18:00") and cost as value (Number)
+    For example, it should be something like :
+    {
+        "17:00": 50,
+        "22:00: 40,
+    }
+    In other words, for the hour beginning at 17:00, labour cost was
+    50 pounds
+    :rtype dict:
+    """
+    import csv
+    
+    shifts_dict = {
+    }
+
+    with open(path_to_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        lineCount = 0
+        minHr = 23
+        maxHr = 0
+        #populate shift dictonary with keys from the first shift by the earliest worker to the last shift of the latest worker
+        for row in csv_reader:
+            if lineCount != 0:
+                if int(row[3].split(":")[0])<=minHr:
+                    minHr=int(row[3].split(":")[0])
+                if int(row[1].split(":")[0])>maxHr:
+                    maxHr=int(row[1].split(":")[0])
+                if int(row[1].split(":")[0])==minHr and int(row[1].split(":")[1])!=0:
+                    maxHr=int(row[1].split(":")[0])+1
+            lineCount += 1
+        #set each value in the dictionary initally to 0
+        while(minHr<maxHr):
+            if(minHr<10):
+                shifts_dict["0"+str(minHr)+":00"]=0
+            else:
+                shifts_dict[str(minHr)+":00"]=0
+            minHr += 1
+        lineCount=0
+    with open(path_to_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+            if lineCount != 0:
+                #for each worker find the start hour and final hour of the shift
+                sHr=int(row[3].split(":")[0])
+                fHr=int(row[1].split(":")[0])
+                if(int(row[3].split(":")[1])!=0):
+                    #calculate fractions of hour worked in the first hour of the shift
+                    if(sHr<10):
+                        shifts_dict["0"+str(sHr)+":00"] += float(row[2])*(60-int(row[3].split(":")[1]))/60
+                    else:
+                        shifts_dict[str(sHr)+":00"] += float(row[2])*(60-int(row[3].split(":")[1]))/60
+                    sHr += 1
+                while(sHr<fHr):
+                    #for each hour worked add the hourly rate to each key
+                    if(sHr<10):
+                        shifts_dict["0"+str(sHr)+":00"] += float(row[2])
+                    else:
+                        shifts_dict[str(sHr)+":00"] += float(row[2])
+                    sHr += 1
+                ##calculate fractions of hour worked in the last hour of the shift
+                if(int(row[1].split(":")[1])!=0):
+                    if(fHr<10):
+                        shifts_dict["0"+str(fHr)+":00"] += float(row[2])*int(row[1].split(":")[1])/60
+                    else:
+                        shifts_dict[str(fHr)+":00"] += float(row[2])*int(row[1].split(":")[1])/60
+                #deduct payment during breaks
+                bHr = row[0].split("-")
+                b1 = bHr[0].strip()
+                b2 = bHr[1].strip()
+                t1 = time_off(b1)
+                t2 = time_off(b2)
+                #if the manager enters an hour in the afternoon while ommiting 'pm' we can tell if the 
+                #value is smaller than the start hour and add 12 to account for the hour being in the afternoon
+                if(t1<int(row[3].split(":")[0])):
+                    t1+=12
+                if(t2<int(row[3].split(":")[0])):
+                    t2+=12
+                #deduct the hourly rate from the total in the dictonary having already added the time in breaks in 
+                #the previous step
+                if(t1-int(t1)!=0):
+                    if(int(t1)<10):
+                        shifts_dict["0"+str(int(t1))+":00"] -= float(row[2])*(1-t1+int(t1))
+                    else:
+                        shifts_dict[str(int(t1))+":00"] -= float(row[2])*(1-t1+int(t1))
+                    t1 += 1
+                while(int(t1)<int(t2)):
+                    if(int(t1)<10):
+                        shifts_dict["0"+str(int(t1))+":00"] -= float(row[2])
+                    else:
+                        shifts_dict[str(int(t1))+":00"] -= float(row[2])
+                    t1 += 1
+                if(t2-int(t2)!=0):
+                    if(int(t1)<10):
+                        shifts_dict["0"+str(int(t2))+":00"] -= float(row[2])*(t2-int(t2))
+                    else:
+                        shifts_dict[str(int(t2))+":00"] -= float(row[2])*(t2-int(t2))
+                lineCount += 1
+            else:
+                lineCount += 1
+            
+    return shifts_dict
+                    
+def time_off(b0):
+    #analyse the time off start and end time
+    import re
+    b0=b0.lower()
+    p=False
+    #assuming the only letters in the input are likely to be the 'am' or 'pm' determinant remove these
+    if "pm" in b0:
+        b0=b0.replace("pm","")
+        p=True
+    if "am" in b0:
+        b0=b0.replace("pm","")
+    #assuming the manager inputted the number of minutes at which the break started or ended
+    #after either a period or a colon split the string to find the hour and minute of break end and start
+    a0 = int(re.split("\.|:", b0)[0])
+    if "." in b0 or ":" in b0:
+        a0 += (int(re.split("\.|:", b0)[1])/60)
+    #if the manager inputted a pm time add 12 to get a mod-24 number
+    if p:
+        a0 += 12
+    #returns a float number with the fraction of hour in the break after the period
+    return a0
+
+def process_sales(path_to_csv):
+    """
+
+    :param path_to_csv: The path to the transactions.csv
+    :type string:
+    :return: A dictionary with time (string) with format %H:%M as key and
+    sales as value (string),
+    and corresponding value with format %H:%M (e.g. "18:00"),
+    and type float)
+    For example, it should be something like :
+    {
+        "17:00": 250,
+        "22:00": 0,
+    },
+    This means, for the hour beginning at 17:00, the sales were 250 dollars
+    and for the hour beginning at 22:00, the sales were 0.
+
+    :rtype dict:
+    """
+    import csv
+    
+    sales_dict = {
+    }
+
+    with open(path_to_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        lineCount = 0
+        for row in csv_reader:
+            if lineCount != 0:
+                hr=int(row[1].split(":")[0])
+                #if there already is a sale in the hour internal add the sale total to it, if not add a 
+                #new key to the dictionary
+                if(hr<10):
+                    if "0"+str(hr)+":00" in sales_dict:
+                        sales_dict["0"+str(hr)+":00"] += float(row[0])
+                    else:
+                        sales_dict["0"+str(hr)+":00"] = float(row[0])
+                else:
+                    if str(hr)+":00" in sales_dict:
+                        sales_dict[str(hr)+":00"] += float(row[0])
+                    else:
+                        sales_dict[str(hr)+":00"] = float(row[0])
+                lineCount += 1
+            else:
+                lineCount += 1
+    return sales_dict
+
+def compute_percentage(shifts, sales):
+    """
+
+    :param shifts:
+    :type shifts: dict
+    :param sales:
+    :type sales: dict
+    :return: A dictionary with time as key (string) with format %H:%M and
+    percentage of labour cost per sales as value (float),
+    If the sales are null, then return -cost instead of percentage
+    For example, it should be something like :
+    {
+        "17:00": 20,
+        "22:00": -40,
+    }
+    :rtype: dict
+    """
+    perc_dict={
+    }
+    for item in shifts:
+        if item in sales:
+            perc_dict[item]=100.0*shifts[item]/sales[item]
+        else:
+            perc_dict[item]=-shifts[item]
+    return perc_dict
+
+def best_and_worst_hour(percentages):
+    """
+
+    Args:
+    percentages: output of compute_percentage
+    Return: list of strings, the first element should be the best hour,
+    the second (and last) element should be the worst hour. Hour are
+    represented by string with format %H:%M
+    e.g. ["18:00", "20:00"]
+
+    """
+    perc=list(percentages.values())
+    hour=list(percentages.keys())
+    maxPerc = hour[perc.index(max(perc))]
+    minPerc = hour[perc.index(min(perc))]
+    return [maxPerc, minPerc]
+
+def main(path_to_shifts, path_to_sales):
+    """
+    Do not touch this function, but you can look at it, to have an idea of
+    how your data should interact with each other
+    """
+
+    shifts_processed = process_shifts(path_to_shifts)
+    sales_processed = process_sales(path_to_sales)
+    percentages = compute_percentage(shifts_processed, sales_processed)
+    best_hour, worst_hour = best_and_worst_hour(percentages)
+    return best_hour, worst_hour
+
+if __name__ == '__main__':
+    # You can change this to test your code, it will not be used
+    path_to_sales = "./transactions.csv"
+    path_to_shifts = "./work_shifts.csv"
+    best_hour, worst_hour = main(path_to_shifts, path_to_sales)
